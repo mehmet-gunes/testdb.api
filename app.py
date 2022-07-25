@@ -1,17 +1,17 @@
 from flask import Flask
 from configparser import ConfigParser
 
-from database.db import configure_db, configure_ma, db
-from resources.users import usr
-from resources.tubes import test_tube, root
+from repository.db import configure_db, configure_ma, db
+from services.users import usr
+from services.tubes import test_tube, root
 
 
 def create_app():
     # Init app
     app = Flask(__name__)
 
-    # Configure database
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database/example.sqlite"
+    # Configure repository
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///repository/example.sqlite"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     configure_db(app)
@@ -22,10 +22,11 @@ def create_app():
     config.read("secret.config")
     app.secret_key = config['DEFAULT']["secret_key"]
 
-    # blueprint for resources
+    # blueprint for services
     app.register_blueprint(root, url_prefix='/')
     app.register_blueprint(usr, url_prefix='/user')
     app.register_blueprint(test_tube, url_prefix='/tube')
+
     return app
 
 

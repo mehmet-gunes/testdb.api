@@ -135,4 +135,4 @@ dmypy.json
 #secret.config
 
 # Database
-#database/example.sqlite
+#repository/example.sqlite

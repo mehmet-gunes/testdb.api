@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
 
-from database.db import db
-from database.models import User, Tube
-from database.schemas import UserSchema, UserTubesSchema
+from repository.db import db
+from repository.models import User, Tube
+from repository.schemas import UserSchema, UserTubesSchema
 
 usr = Blueprint('users', __name__)
 
@@ -35,9 +35,15 @@ def post_user():
     except ValueError:
         return jsonify({"Error": f"User {request.json['email']} already in use!"}), 400
 
+
 # Delete a user's records using email
 @usr.route('/<email_address>', methods=['DELETE'])
 def delete_user(email_address):
+    """
+        Included for showing all CRUD operations but is not needed
+        :param email_address: email
+        :return:
+        """
     try:
         user = User.query.filter_by(email=email_address).first()
         Tube.query.filter_by(user_id=user.id).delete()

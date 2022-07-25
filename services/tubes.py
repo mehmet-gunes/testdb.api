@@ -2,9 +2,9 @@ import uuid
 
 from flask import Blueprint, jsonify, request
 
-from database.db import db
-from database.models import Tube, User
-from database.schemas import TubeSchema
+from repository.db import db
+from repository.models import Tube, User
+from repository.schemas import TubeSchema
 
 root = Blueprint('root', __name__)
 # URL prefix with /tube
@@ -14,6 +14,10 @@ test_tube = Blueprint('test_tube', __name__)
 # Get registered test tubes
 @root.route('/', methods=['GET'])
 def get_registered():
+    """
+    method is called with root URL
+    :return: the tubes with 'registered' status
+    """
     registered_tubes = Tube.query.filter_by(status='registered').all()
     tubes_schema = TubeSchema(many=True)
     result = tubes_schema.dump(registered_tubes)
@@ -23,6 +27,10 @@ def get_registered():
 # Get all test tube list
 @test_tube.route('/', methods=['GET'])
 def tubes():
+    """
+    method is called with /tube/ URL
+    :return: the list of all tubes
+    """
     all_tubes = Tube.query.all()
     tubes_schema = TubeSchema(many=True)
     result = tubes_schema.dump(all_tubes)
@@ -35,7 +43,7 @@ def post_tube():
     try:
         if 'barcode' in request.json:
             if Tube.query.filter_by(barcode=request.json['barcode']).first():
-                return jsonify({"Error": f"Barcode {request.json['barcode']} already in use!"}), 400
+                raise ValueError()
             new_barcode = request.json['barcode']
         else:
             new_barcode = str(uuid.uuid4())
@@ -51,6 +59,8 @@ def post_tube():
         user_id = user.id
 
         if 'status' in request.json:
+            if request.json['status'] not in ['registered', 'received', 'positive', 'negative', 'indeterminate']:
+                raise ReferenceError()
             status = request.json['status']
         else:
             status = 'registered'
@@ -64,7 +74,9 @@ def post_tube():
     except AttributeError:
         return jsonify({"Error": f"User not found!"}), 400
     except ValueError:
-        return jsonify({"Error": f"User {request.json['email']} already in use!"}), 400
+        return jsonify({"Error": f"Barcode {request.json['barcode']} already in use!"}), 400
+    except ReferenceError:
+        return jsonify({"Error": f"Status {request.json['status']} is not valid!"}), 400
 
 
 # Get a tube with barcode
@@ -84,6 +96,11 @@ def get_tube(barcode):
 # Delete a tube record using barcode
 @test_tube.route('/<barcode>', methods=['DELETE'])
 def delete_tube(barcode):
+    """
+    Included for showing all CRUD operations but is not needed
+    :param barcode:
+    :return:
+    """
     try:
         tube_record = Tube.query.filter_by(barcode=barcode).first()
         if not tube_record:
