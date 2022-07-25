@@ -10,6 +10,9 @@ usr = Blueprint('users', __name__)
 # Get user list
 @usr.route('/', methods=['GET'])
 def users():
+    """
+    :return: List of all users
+    """
     all_users = User.query.all()
     users_schema = UserSchema(many=True)
     result = users_schema.dump(all_users)
@@ -19,6 +22,10 @@ def users():
 # Create a new user ensuring unique email
 @usr.route('/', methods=['POST'])
 def post_user():
+    """
+    Creates a new user with the email given in the request body json
+    :return:
+    """
     try:
         user = User.query.filter_by(email=request.json['email']).first()
         if user:
@@ -41,7 +48,7 @@ def post_user():
 def delete_user(email_address):
     """
         Included for showing all CRUD operations but is not needed
-        :param email_address: email
+        :param email_address:
         :return:
         """
     try:
@@ -58,6 +65,10 @@ def delete_user(email_address):
 # Get a user's records from email
 @usr.route('/<email_address>', methods=['GET'])
 def get_user(email_address):
+    """
+    :param email_address:
+    :return: List of tubes for the user with email address given in URL
+    """
     user = User.query.filter_by(email=email_address).first()
     if not user:
         return jsonify({"Error": f"User with {email_address} not found!"}), 400

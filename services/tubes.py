@@ -15,7 +15,7 @@ test_tube = Blueprint('test_tube', __name__)
 @root.route('/', methods=['GET'])
 def get_registered():
     """
-    method is called with root URL
+    method is called with root URL .../
     :return: the tubes with 'registered' status
     """
     registered_tubes = Tube.query.filter_by(status='registered').all()
@@ -28,7 +28,7 @@ def get_registered():
 @test_tube.route('/', methods=['GET'])
 def tubes():
     """
-    method is called with /tube/ URL
+    method is called with .../tube/ URL
     :return: the list of all tubes
     """
     all_tubes = Tube.query.all()
@@ -40,6 +40,13 @@ def tubes():
 # Create a new test tube record
 @test_tube.route('/', methods=['POST'])
 def post_tube():
+    """
+    creates a new tube for the given email.
+    If barcode is given, it is ensured to be unique; otherwise a new one is generated.
+    If user email does not exist, a new user is created.
+    If status is not a valid option an error is returned.
+    :return:
+    """
     try:
         if 'barcode' in request.json:
             if Tube.query.filter_by(barcode=request.json['barcode']).first():
@@ -82,6 +89,10 @@ def post_tube():
 # Get a tube with barcode
 @test_tube.route('/<barcode>', methods=['GET'])
 def get_tube(barcode):
+    """
+    :param barcode:
+    :return: tube details for the barcode given in the URL
+    """
     try:
         tube_record = Tube.query.filter_by(barcode=barcode).first()
         if not tube_record:
@@ -115,15 +126,20 @@ def delete_tube(barcode):
 # Update tube status
 @test_tube.route('/', methods=['PATCH'])
 def update_tubes():
+    """
+    Updates a list of barcodes with new status.
+    If barcode is not registered or status is invalid, they are reported back within the "Skipped"
+    :return:
+    """
     updated = []
-    missing = []
+    skipped = []
     for code in request.json:
         tube_record = Tube.query.filter_by(barcode=code).first()
-        if tube_record:
+        if tube_record and request.json[code] in ['registered', 'received', 'positive', 'negative', 'indeterminate']:
             tube_record.status = request.json[code]
             db.session.commit()
             updated.append(code)
         else:
-            missing.append(code)
+            skipped.append(code)
 
-    return jsonify({"Updated": updated, "Missing barcodes": missing})
+    return jsonify({"Updated": updated, "Skipped": skipped})
