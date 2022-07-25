@@ -1,23 +1,35 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from configparser import ConfigParser
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///example.sqlite"
-db = SQLAlchemy(app)
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String, unique=True, nullable=False)
+from database.db import configure_db, configure_ma, db
+from resources.users import usr
+from resources.tubes import test_tube, root
 
 
-class Tube(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    barcode = db.Column(db.String, unique=True, nullable=False)
-    status = db.Column(db.String, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
+def create_app():
+    # Init app
+    app = Flask(__name__)
+
+    # Configure database
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database/example.sqlite"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    configure_db(app)
+    configure_ma(app)
+
+    # Init secret from config file
+    config = ConfigParser()
+    config.read("secret.config")
+    app.secret_key = config['DEFAULT']["secret_key"]
+
+    # blueprint for resources
+    app.register_blueprint(root, url_prefix='/')
+    app.register_blueprint(usr, url_prefix='/user')
+    app.register_blueprint(test_tube, url_prefix='/tube')
+    return app
 
 
-@app.route("/")
-def hello_world():
-    return {"hello": "world"}
+# Run Server
+if __name__ == '__main__':
+    api_app = create_app()
+    api_app.run(debug=True)
